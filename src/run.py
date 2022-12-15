@@ -68,7 +68,7 @@ def get_company_sites() -> pd.DataFrame:
         driver.get(base_page_url + "page=" + str(page))
 
     # get each company website url
-    OUTPUT_COL_NAMES = ['COMPANY_NAME','WEBSITE']
+    OUTPUT_COL_NAMES = ['COMPANY_NAME','SERVICE_SECTION','WEBSITE']
     df_companies_info = pd.DataFrame(columns=OUTPUT_COL_NAMES)
     for page in company_page_list:
         XPATH_COMPANY_TITLE = "/html/body/table/tbody/tr[3]/td[2]/div[2]"
@@ -77,10 +77,12 @@ def get_company_sites() -> pd.DataFrame:
             driver.get(page)
             elements = WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.XPATH, XPATH_WEBSITE_COMPANY)))
             name = driver.find_element(By.XPATH, XPATH_COMPANY_TITLE)
+            name_extract = name.text.split('- ')[0].strip('"')
+            service = name.text.split('- ')[1].strip()
             site = driver.find_element(By.XPATH, XPATH_WEBSITE_COMPANY)
-            df_new_row = pd.DataFrame(data=[[name.text, site.text]], columns=OUTPUT_COL_NAMES)
+            df_new_row = pd.DataFrame(data=[[name_extract, service, site.text]], columns=OUTPUT_COL_NAMES)
             df_companies_info = pd.concat([df_companies_info, df_new_row], ignore_index=True)
-            logger.info("Added new company info to table, new company name is {}".format(name.text))
+            logger.info("Added new company info to table, new company name is {}".format(name_extract))
         except (TimeoutException, NoSuchElementException) as ex:
             logger.info("Skip extracting company info from {}/n{}".format(page, ex))
     return df_companies_info
@@ -98,7 +100,10 @@ def get_company_sites() -> pd.DataFrame:
 
 
 def save_to_file(df_input: pd.DataFrame):
-    df_input.to_csv(os.getcwd() + '\companies_info.csv', index=False, header=True)
+    filename = os.path.basename(__file__)
+    filepath = os.path.realpath(__file__)
+    filepath_result = filepath.replace('\src\\' + filename, '\companies_info.csv')
+    df_input.to_csv(filepath_result, index=False, header=True, mode="w")
 
 
 def main():
