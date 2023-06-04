@@ -10,6 +10,7 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 import time
 import pandas as pd
 import os
+import subprocess
 
 
 logger = logging.getLogger(__name__)
@@ -106,13 +107,29 @@ def save_to_file(df_input: pd.DataFrame):
     df_input.to_csv(filepath_result, index=False, header=True, mode="w")
 
 
-def main():
-    df_companies_info = get_company_sites()
-    save_to_file(df_companies_info)
-    # go through the list of urls
+def run_thescrapper():
+    return
+
+
+def get_contact_from_url():
+    current_path = os.path.abspath(__file__)
+    print(current_path)
+    tokens = current_path.split('src')
+    filepath = tokens[0] + 'companies_info.csv'
+    try:
+        df = pd.read_csv(filepath)
+        print(df)
+    except Exception as error:
+        logger.info(error)
+    return
     
 
-
+def main():
+    # df_companies_info = get_company_sites()
+    # save_to_file(df_companies_info)
+    # go through the list of urls
+    get_contact_from_url()
+    
 
 if __name__ == "__main__":
     main()

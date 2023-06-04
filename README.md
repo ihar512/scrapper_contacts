@@ -3,7 +3,7 @@
 ## INITIAL ENVIRONMENT SETUP
 1. Setup virtual environment for better package management:
    * Create virtual environment `python3 -m venv venv_ubuntu`
-   * Activate `source env/bin/activate`
+   * Activate `source venv_ubuntu/bin/activate`
    * Use requirements file to install packages `python3 -m pip install -r requierments.txt`
 2. Downlaod and install geckodriver
    1. Go to the geckodriver releases page (https://github.com/mozilla/geckodriver/releases). Find the latest version of the driver for your platform and download it. For example: `wget https://github.com/mozilla/geckodriver/releases/download/v0.32.0/geckodriver-v0.32.0-linux64.tar.gz`
