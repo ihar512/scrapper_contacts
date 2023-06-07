@@ -115,12 +115,18 @@ def get_contact_from_url():
     current_path = os.path.abspath(__file__)
     print(current_path)
     tokens = current_path.split('src')
+    repo_path = current_path.split('scrapper_contacts')
     filepath = tokens[0] + 'companies_info.csv'
     try:
-        df = pd.read_csv(filepath)
-        print(df)
+        df_companies = pd.read_csv(filepath)
+        print(df_companies)
     except Exception as error:
         logger.info(error)
+    for index, row in df_companies.iterrows():
+        # call scrapper
+        print(index, row['WEBSITE'])
+        output = subprocess.run(['python3', repo_path[0]+'TheScrapper/TheScrapper.py', '--url', row['WEBSITE']], capture_output=True, text=True, shell=True)
+        print(output)
     return
     
 
