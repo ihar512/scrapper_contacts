@@ -1,2 +1,6 @@
 # ignore log files
 *.log
+
+# ignore virtual environment
+venv_windows
+venv_ubuntu

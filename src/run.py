@@ -1,7 +1,5 @@
 from logging import exception
-import requests
 import logging
-from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
@@ -10,7 +8,6 @@ from selenium.common.exceptions import NoSuchElementException, TimeoutException
 import time
 import pandas as pd
 import os
-import subprocess
 
 
 logger = logging.getLogger(__name__)
@@ -25,17 +22,35 @@ logging.basicConfig(level=logging.INFO,
 
 def get_company_sites() -> pd.DataFrame:
     URL_BASE = "https://www.epdweb.com/search.php"
-    service_section = {'Lighting': '9'}
-    url = URL_BASE + "?section=" + service_section["Lighting"]
+    service_section = {'Lighting_XPath': '/html/body/table/tbody/tr[3]/td[2]/table[1]/tbody/tr[2]/td[1]/form/table/tbody/tr[1]/td[1]/table/tbody/tr[2]/td[1]/input',
+                       'Sound_XPath': '/html/body/table/tbody/tr[3]/td[2]/table[1]/tbody/tr[2]/td[1]/form/table/tbody/tr[1]/td[1]/table/tbody/tr[3]/td[1]',
+                       'Staging / Rigging_XPath': '/html/body/table/tbody/tr[3]/td[2]/table[1]/tbody/tr[2]/td[1]/form/table/tbody/tr[1]/td[1]/table/tbody/tr[4]/td[1]/input',
+                       'Video & Projection_XPath': '/html/body/table/tbody/tr[3]/td[2]/table[1]/tbody/tr[2]/td[1]/form/table/tbody/tr[1]/td[1]/table/tbody/tr[5]/td[1]/input',
+                       'Set / Scenic Design and Construction_XPath': '/html/body/table/tbody/tr[3]/td[2]/table[1]/tbody/tr[2]/td[1]/form/table/tbody/tr[1]/td[1]/table/tbody/tr[6]/td[1]/input',
+                       'Manufacturers / Distributors_XPath': '/html/body/table/tbody/tr[3]/td[2]/table[1]/tbody/tr[2]/td[1]/form/table/tbody/tr[1]/td[1]/table/tbody/tr[7]/td[1]/input',
+                       'Lasers_XPath': '/html/body/table/tbody/tr[3]/td[2]/table[1]/tbody/tr[2]/td[1]/form/table/tbody/tr[1]/td[1]/table/tbody/tr[8]/td[1]/input',
+                       'Fog and Haze Machines_XPath': '/html/body/table/tbody/tr[3]/td[2]/table[1]/tbody/tr[2]/td[1]/form/table/tbody/tr[1]/td[1]/table/tbody/tr[9]/td[1]/input',
+                       'Cases_XPath': '/html/body/table/tbody/tr[3]/td[2]/table[1]/tbody/tr[2]/td[1]/form/table/tbody/tr[1]/td[1]/table/tbody/tr[12]/td[1]/input'}
+    url = URL_BASE
     driver = webdriver.Firefox()
     driver.get(url)
+    time.sleep(2)
     try:
+        for service in service_section.values():
+            print(service)
+            elements = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.XPATH, service)))
+            elements.click()
+    except NoSuchElementException as error:
+        logger.info("cannot find checkbox: %s", error)
+        driver.quit()
+    
+    try:    
         # go to home search page, click submit
         elements = WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.NAME, "submit")))
         logger.info("submit button found")
         elements.click()
-    except NoSuchElementException:
-        logger.info("cannot find submit button")
+    except NoSuchElementException as error:
+        logger.info("cannot find submit button: %s", error)
         driver.quit()
 
     try:
@@ -51,7 +66,7 @@ def get_company_sites() -> pd.DataFrame:
     except NoSuchElementException:
         logger.info("cannot find last page element")
         driver.quit()
-    
+
     # iterate through each page, then add company pages to list
     company_page_list=[]
     for page in range(2,int(last_page_num)+1):
@@ -88,17 +103,6 @@ def get_company_sites() -> pd.DataFrame:
             logger.info("Skip extracting company info from {}/n{}".format(page, ex))
     return df_companies_info
 
-    # headers = {'User-Agent': "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/42.0.2311.135 Safari/537.36 Edge/12.246"}
-    # URL = "https://www.epdweb.com/search_result.php"
-    # r = requests.get(URL,
-    #                  headers=headers,
-    #                  params={'section': '9', 'page': '1'})
-    # print(r.content)
-    # soup = BeautifulSoup(r.content, 'html.parser')
-    # print(soup.prettify())
-    # results = soup.find_all("div", class_="directory-listing")
-    # print(results)
-
 
 def save_to_file(df_input: pd.DataFrame):
     filename = os.path.basename(__file__)
@@ -107,35 +111,22 @@ def save_to_file(df_input: pd.DataFrame):
     df_input.to_csv(filepath_result, index=False, header=True, mode="w")
 
 
-def run_thescrapper():
-    return
+def drop_company_duplicates():
+    filename = os.path.basename(__file__)
+    filepath = os.path.realpath(__file__)
+    filepath_input = filepath.replace('\src\\' + filename, '\companies_info.csv')
+    df_duplicates = pd.read_csv(filepath_input)
+    df_filtered = df_duplicates.drop_duplicates(subset=['COMPANY_NAME', 'WEBSITE'])
+    print(df_filtered)
+    filepath_result = filepath.replace('\src\\' + filename, '\companies_info_filtered.csv')
+    df_filtered.to_csv(filepath_result, index=False, header=True, mode="w")
 
-
-def get_contact_from_url():
-    current_path = os.path.abspath(__file__)
-    print(current_path)
-    tokens = current_path.split('src')
-    repo_path = current_path.split('scrapper_contacts')
-    filepath = tokens[0] + 'companies_info.csv'
-    try:
-        df_companies = pd.read_csv(filepath)
-        print(df_companies)
-    except Exception as error:
-        logger.info(error)
-    for index, row in df_companies.iterrows():
-        # call scrapper
-        print(index, row['WEBSITE'])
-        output = subprocess.run(['python3', repo_path[0]+'TheScrapper/TheScrapper.py', '--url', row['WEBSITE']], capture_output=True, text=True, shell=True)
-        print(output)
-    return
-    
 
 def main():
-    # df_companies_info = get_company_sites()
-    # save_to_file(df_companies_info)
-    # go through the list of urls
-    get_contact_from_url()
-    
+    df_companies_info = get_company_sites()
+    save_to_file(df_companies_info)
+    drop_company_duplicates()
+
 
 if __name__ == "__main__":
     main()
