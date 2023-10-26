@@ -4,3 +4,4 @@ bs4==0.0.1
 selenium==4.4.0
 pandas==1.5.0
 scrapy==2.7.0
+twisted>=23.10.0rc1 # not directly required, pinned by Snyk to avoid a vulnerability
