@@ -6,7 +6,7 @@ COPY requirements.txt .
 RUN pip install --user -r requirements.txt
 
 # second unnamed stage
-FROM python:3.8-slim
+FROM python:3.13.0a4-slim
 WORKDIR /code
 
 # copy only the dependencies installation from the 1st stage image
